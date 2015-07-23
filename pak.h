@@ -8,5 +8,6 @@ typedef struct s_PakFile PakFile;
 
 PakFile *readPakFile(const char *filename);
 void *readFile(PakFile *pf, const char *filename, int *size);
+void freePak(PakFile *pf);
 
 #endif

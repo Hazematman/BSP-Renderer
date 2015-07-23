@@ -86,3 +86,12 @@ void *readFile(PakFile *pf, const char *filename, int *size){
 
 	return NULL;
 }
+
+void freePak(PakFile *pf){
+	for(int i=0; i<pf->numFiles; i++){
+		free(pf->files[i].filename);
+		free(pf->files[i].data);
+	}
+	
+	free(pf);
+}
