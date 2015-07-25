@@ -1,7 +1,7 @@
 #ifndef PAK_H
 #define PAK_H
 
-#include <stdint.h>
+#include "types.h"
 
 struct s_PakFile;
 typedef struct s_PakFile PakFile;

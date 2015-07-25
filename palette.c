@@ -5,7 +5,7 @@
 #define MAX_PALETTE_COLOURS 256
 
 struct s_Palette{
-	colourUByte3 colours[256];
+	colour3UByte colours[256];
 };
 
 Palette *readPalette(void *paletteData){
@@ -15,7 +15,7 @@ Palette *readPalette(void *paletteData){
 	return plt;
 }
 
-colourUByte3 getPaletteColour(Palette *plt, uint8_t index){
+colour3UByte getPaletteColour(Palette *plt, uint8_t index){
 	return plt->colours[index];
 }
 

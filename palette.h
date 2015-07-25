@@ -7,7 +7,7 @@ struct s_Palette;
 typedef struct s_Palette Palette;
 
 Palette *readPalette(void *paletteData);
-colourUByte3 getPaletteColour(Palette *plt, uint8_t index);
+colour3UByte getPaletteColour(Palette *plt, uint8_t index);
 void freePalette(Palette *plt);
 
 #endif

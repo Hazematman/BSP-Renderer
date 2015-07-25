@@ -7,7 +7,7 @@ int main(){
 	PakFile *pf = readPakFile("id1/pak0.pak");
 	Palette *plt = readPalette(readFile(pf, "gfx/palette.lmp", NULL));
 	
-	Bsp *bsp = readBsp(readFile(pf, "maps/start.bsp", NULL));
+	Bsp *bsp = readBsp(readFile(pf, "maps/start.bsp", NULL), plt);
 
 	freeBsp(bsp);
 	freePalette(plt);

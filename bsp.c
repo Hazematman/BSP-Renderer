@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bsp.h"
-#include "types.h"
+#include "texture.h"
 
 #define BSP_VERSION 29
 
@@ -38,13 +38,47 @@ typedef struct {
 	BspEntry models;
 } BspHeader;
 
+typedef struct {
+	char name[16];
+	uint32_t width;
+	uint32_t height;
+	uint32_t offset1;
+	uint32_t offset2;
+	uint32_t offset4;
+	uint32_t offset8;
+} TextureDef;
+
 struct s_Bsp {
+	int32_t numTextures;
+	Texture **textures;
 };
 
-Bsp *readBsp(void *BspData){
+static void loadBspTextures(Bsp *bsp, void *texData, Palette *plt){
+	// Read in number of textures
+	memcpy(&bsp->numTextures, texData, sizeof(int32_t));
+	bsp->textures = malloc(sizeof(Texture*)*bsp->numTextures);
+
+	// For each texture read its offset and then read texture data
+	int32_t *offsetData = texData + sizeof(int32_t);
+	for(int i=0; i < bsp->numTextures; i++){
+		int32_t offset = offsetData[i];
+
+		void *texDefData = texData + offset;
+		TextureDef texDef;
+		memcpy(&texDef, texDefData, sizeof(TextureDef));
+
+		// Load and convert the texture to RGB
+		// TODO: deal with mipmaps
+		bsp->textures[i] = readPltTex(texDefData + texDef.offset1, texDef.width, texDef.height, plt);
+	}
+
+	return;
+}
+
+Bsp *readBsp(void *bspData, Palette *plt){
 	BspHeader header;
 	
-	memcpy(&header, BspData, sizeof(BspHeader));
+	memcpy(&header, bspData, sizeof(BspHeader));
 	if(header.version != BSP_VERSION){
 		printf("Invalid BSP version expected %d found %d\n",
 				BSP_VERSION, header.version);
@@ -52,6 +86,7 @@ Bsp *readBsp(void *BspData){
 	}
 
 	Bsp *bsp = malloc(sizeof(Bsp));
+	loadBspTextures(bsp, bspData + header.miptex.offset, plt);
 	return bsp;
 }
 
