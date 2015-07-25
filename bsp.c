@@ -48,10 +48,44 @@ typedef struct {
 	uint32_t offset8;
 } TextureDef;
 
+typedef struct {
+	uint16_t planeId;
+	
+	uint16_t side;
+	int32_t edgeId;
+	uint16_t edgeNum;
+
+	uint16_t texinfoId;
+	uint8_t typeLight;
+	uint8_t baseLight;
+	uint8_t light[2];
+	int32_t lightmap;
+} FaceDef;
+
+typedef struct {
+	uint16_t vert0;
+	uint16_t vert1;
+} EdgeDef;
+
 struct s_Bsp {
 	int32_t numTextures;
 	Texture **textures;
 };
+
+static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *edgeData, int32_t edgeSize,
+		void *ledgeData, int32_t ledgeSize){
+
+	//int numFaces = faceSize / sizeof(FaceDef);
+	FaceDef *faces = malloc(faceSize);
+	memcpy(faces, faceData, faceSize);
+
+	EdgeDef *edges = malloc(edgeSize);
+	memcpy(edges, edgeData, edgeSize);
+
+	uint16_t *ledges = malloc(ledgeSize);
+	memcpy(ledges, ledgeData, ledgeSize);
+
+}
 
 static void loadBspTextures(Bsp *bsp, void *texData, Palette *plt){
 	// Read in number of textures
@@ -86,10 +120,20 @@ Bsp *readBsp(void *bspData, Palette *plt){
 	}
 
 	Bsp *bsp = malloc(sizeof(Bsp));
+	// Start by loading texture data from BSP
 	loadBspTextures(bsp, bspData + header.miptex.offset, plt);
+
+	// Next we can load all the geometry from the BSP
+	loadBspGeometry(bsp, bspData+header.faces.offset, header.faces.size,
+			bspData+header.edges.offset, header.edges.size,
+			bspData+header.ledges.offset, header.ledges.size);
 	return bsp;
 }
 
 void freeBsp(Bsp *bsp){
+	for(int i=0; i < bsp->numTextures; i++){
+		freeTex(bsp->textures[i]);
+	}
+	free(bsp->textures);
 	free(bsp);
 }

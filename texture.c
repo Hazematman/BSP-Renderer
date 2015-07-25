@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "gl/gl_3.h"
 #include "texture.h"
 #include "types.h"
 
 struct s_Texture {
+	GLuint glId;
 	int width;
 	int height;
 	colour3UByte *data;
@@ -19,6 +21,21 @@ Texture *readPltTex(uint8_t *texData, int width, int height, Palette *plt){
 	for(int i = 0; i < width*height; i++){
 		tex->data[i] = getPaletteColour(plt, texData[i]);
 	}
+
+	glGenTextures(1, &tex->glId);
+	glBindTexture(GL_TEXTURE_2D, tex->glId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGB,
+			width,
+			height,
+			0,
+			GL_RGB,
+			GL_UNSIGNED_BYTE,
+			tex->data);
+
 
 	return tex;
 }
