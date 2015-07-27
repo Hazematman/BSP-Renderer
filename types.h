@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+#define PI 3.14159f
+
+typedef struct {
+	float x;
+	float y;
+} vec2Float;
+
 typedef struct {
 	uint8_t r;
 	uint8_t g;
@@ -30,5 +37,9 @@ typedef struct {
 	vec3Short min;
 	vec3Short max;
 } BBoxShort;
+
+typedef struct {
+	float m[16];
+} mat4;
 
 #endif

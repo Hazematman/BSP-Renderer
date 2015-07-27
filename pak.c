@@ -70,6 +70,8 @@ PakFile *readPakFile(const char *filename){
 
 
 	fclose(fp);
+
+	free(entries);
 	return pak;
 }
 
@@ -93,5 +95,6 @@ void freePak(PakFile *pf){
 		free(pf->files[i].data);
 	}
 	
+	free(pf->files);
 	free(pf);
 }

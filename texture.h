@@ -8,6 +8,7 @@ typedef struct s_Texture Texture;
 
 Texture *readPltTex(uint8_t *texData, int width, int height, Palette *plt);
 void writePPM(Texture *tex, const char *filename);
+void bindTexture(Texture *tex);
 void freeTex(Texture *tex);
 
 #endif
