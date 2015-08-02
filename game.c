@@ -105,9 +105,8 @@ void run(){
 	bool running = true;
 	SDL_Event e;
 
-	GLint projLoc = getUniformLoc(&prg, "proj");
-	GLint transLoc = getUniformLoc(&prg, "trans");
-	GLint rotLoc = getUniformLoc(&prg, "rot");
+	GLint projViewLoc = getUniformLoc(&prg, "projView");
+	GLint modelLoc = getUniformLoc(&prg, "model");
 	GLint texLoc = getUniformLoc(&prg, "tex");
 	
 	while(running){
@@ -135,27 +134,27 @@ void run(){
 						pos.y -= speed;
 						break;
 					case SDLK_LEFT:
-						angle -= 0.1;
+						angle += 0.1;
 						break;
 					case SDLK_RIGHT:
-						angle += 0.1;
+						angle -= 0.1;
 						break;
 				}
 			}
 		}
 
-		mat4 proj;
-		mat4 trans;
-		mat4 rot;
-		perspective(&proj, 45.0f * (PI/180.0f), WINDOW_WIDTH/WINDOW_HEIGHT, 0.1f, 1000.0f);
-		translate(&trans, -pos.x, -pos.y, -pos.z);
-		rotateY(&rot, -angle);
+		mat4 projView;
+		mat4 model;
+		identity(&projView);
+		identity(&model);
+		perspective(&projView, 45.0f * (PI/180.0f), WINDOW_WIDTH/WINDOW_HEIGHT, 0.1f, 10000.0f);
+		rotateY(&projView, -angle);
+		translate(&projView, -pos.x, -pos.y, -pos.z);
 		//printf("%f %f %f %f\n",angle, pos.x, pos.y, pos.z);
 
 		glUseProgram(prg.prgID);
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj.m[0]);
-		glUniformMatrix4fv(transLoc, 1, GL_FALSE, &trans.m[0]);
-		glUniformMatrix4fv(rotLoc, 1, GL_FALSE, &rot.m[0]);
+		glUniformMatrix4fv(projViewLoc, 1, GL_FALSE, &projView.m[0]);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model.m[0]);
 		glUniform1i(texLoc, 0);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

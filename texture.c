@@ -1,21 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gl/gl_3.h"
 #include "texture.h"
 #include "types.h"
 
 struct s_Texture {
+	char *name;
 	GLuint glId;
 	int width;
 	int height;
 	colour3UByte *data;
 };
 
-Texture *readPltTex(uint8_t *texData, int width, int height, Palette *plt){
+Texture *readPltTex(uint8_t *texData, int width, int height, Palette *plt, const char *name){
 	Texture *tex = malloc(sizeof(Texture));
 	tex->width = width;
 	tex->height = height;
 	tex->data = malloc(sizeof(colour3UByte)*width*height);
+	tex->name = malloc(strlen(name)+1);
+
+	// Copy name
+	strcpy(tex->name, name);
 
 	// Load and convert all paletted colour data	
 	for(int i = 0; i < width*height; i++){
@@ -50,6 +56,10 @@ int getTexHeight(Texture *tex){
 	return tex->height;
 }
 
+char *getTexName(Texture *tex){
+	return tex->name;
+}
+
 void writePPM(Texture *tex, const char *filename){
 	FILE *fp = fopen(filename, "wb");
 	if(fp == NULL){
@@ -70,5 +80,6 @@ void bindTexture(Texture *tex){
 
 void freeTex(Texture *tex){
 	free(tex->data);
+	free(tex->name);
 	free(tex);
 }

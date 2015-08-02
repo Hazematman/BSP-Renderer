@@ -165,6 +165,13 @@ static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *ed
 		face->verts = malloc(sizeof(Vert)*face->numVerts);
 		TexInfoDef *texInfo = getTexInfo(bsp, faces[i].texinfoId);
 		face->texture = getTexture(bsp, texInfo->texId);
+		face->glId = 0;
+		// If face is a trigger or clip skip loading it's verts
+		// TODO make somekind of stack or vector to store faces so we don't bother
+		// allocating useless memory
+		if(strcmp("trigger", getTexName(face->texture)) == 0 || strcmp("clip", getTexName(face->texture)) == 0){
+			continue;
+		}
 		for(int edge=0; edge < faces[i].edgeNum; edge++){
 			int32_t edgeIndex = ledges[edge+faces[i].edgeId];
 			vec3Float verts[2];
@@ -180,8 +187,8 @@ static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *ed
 
 			face->verts[edge].normal = getPlane(bsp, faces[i].planeId)->normal;
 
-			//Flip y & z so it's oriented properly
-			face->verts[edge].position.x = verts[0].x;
+			// Negate x and flip y & z so it's oriented properly
+			face->verts[edge].position.x = -verts[0].x;
 			face->verts[edge].position.y = verts[0].z;
 			face->verts[edge].position.z = verts[0].y;
 
@@ -218,7 +225,7 @@ static void loadBspTextures(Bsp *bsp, void *texData, Palette *plt){
 
 		// Load and convert the texture to RGB
 		// TODO: deal with mipmaps
-		bsp->textures[i] = readPltTex(texDefData + texDef.offset1, texDef.width, texDef.height, plt);
+		bsp->textures[i] = readPltTex(texDefData + texDef.offset1, texDef.width, texDef.height, plt, texDef.name);
 	}
 
 	return;
@@ -253,6 +260,9 @@ Bsp *readBsp(void *bspData, Palette *plt){
 void renderAllBspFaces(Bsp *bsp){
 	for(int f=0; f < bsp->numFaces; f++){
 		Face *face = &bsp->faces[f];
+		if(face->glId == 0){
+			continue;
+		}
 		glBindBuffer(GL_ARRAY_BUFFER, face->glId);
 		Vert *vert = NULL;
 		// Setup position
