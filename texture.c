@@ -42,6 +42,14 @@ Texture *readPltTex(uint8_t *texData, int width, int height, Palette *plt){
 	return tex;
 }
 
+int getTexWidth(Texture *tex){
+	return tex->width;
+}
+
+int getTexHeight(Texture *tex){
+	return tex->height;
+}
+
 void writePPM(Texture *tex, const char *filename){
 	FILE *fp = fopen(filename, "wb");
 	if(fp == NULL){

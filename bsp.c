@@ -51,13 +51,13 @@ typedef struct {
 } TextureDef;
 
 typedef struct {
-	uint16_t planeId;
+	int16_t planeId;
 	
-	uint16_t side;
+	int16_t side;
 	int32_t edgeId;
-	uint16_t edgeNum;
+	int16_t edgeNum;
 
-	uint16_t texinfoId;
+	int16_t texinfoId;
 	uint8_t typeLight;
 	uint8_t baseLight;
 	uint8_t light[2];
@@ -128,7 +128,7 @@ static Texture *getTexture(Bsp *bsp, int texId){
 static void loadBspPlanes(Bsp *bsp, void *planeData, int32_t planeSize){
 	// Load plane data
 	bsp->planes = malloc(planeSize);
-	memcpy(bsp->verts, planeData, planeSize);
+	memcpy(bsp->planes, planeData, planeSize);
 }
 
 static void loadBspVerts(Bsp *bsp, void *vertData, int32_t vertSize){
@@ -154,19 +154,19 @@ static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *ed
 	EdgeDef *edges = malloc(edgeSize);
 	memcpy(edges, edgeData, edgeSize);
 
-	int16_t *ledges = malloc(ledgeSize);
+	int32_t *ledges = malloc(ledgeSize);
 	memcpy(ledges, ledgeData, ledgeSize);
 
 	for(int i=0; i < bsp->numFaces; i++){
 		// Read all verts from edge data into a vert data structure
 		// that is more suitable for GL rendering
 		Face *face = &bsp->faces[i];
-		face->numVerts = faces[i].edgeNum*2;
+		face->numVerts = faces[i].edgeNum;
 		face->verts = malloc(sizeof(Vert)*face->numVerts);
 		TexInfoDef *texInfo = getTexInfo(bsp, faces[i].texinfoId);
 		face->texture = getTexture(bsp, texInfo->texId);
 		for(int edge=0; edge < faces[i].edgeNum; edge++){
-			int16_t edgeIndex = ledges[edge+faces[i].edgeId];
+			int32_t edgeIndex = ledges[edge+faces[i].edgeId];
 			vec3Float verts[2];
 			// if edgeIndex is negative flip v0 and v1
 			if(edgeIndex < 0){
@@ -178,21 +178,23 @@ static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *ed
 				verts[1] = getVert(bsp, edges[edgeIndex].vert1);
 			}
 
-			for(int v=0; v<2; v++){
-				face->verts[edge*2 + v].normal = getPlane(bsp, faces[i].planeId)->normal;
-				face->verts[edge*2 + v].position = verts[v];
+			face->verts[edge].normal = getPlane(bsp, faces[i].planeId)->normal;
 
-				// compute s and t coordinate for texture mapping
-				face->verts[edge*2 + v].texCoord.x = vec3FDot(&verts[v], &texInfo->vecS) + texInfo->distS;
-				face->verts[edge*2 + v].texCoord.y = vec3FDot(&verts[v], &texInfo->vecT) + texInfo->distT;
-			}
+			//Flip y & z so it's oriented properly
+			face->verts[edge].position.x = verts[0].x;
+			face->verts[edge].position.y = verts[0].z;
+			face->verts[edge].position.z = verts[0].y;
+
+			// compute s and t coordinate for texture mapping
+			face->verts[edge].texCoord.x = (vec3FDot(&verts[0], &texInfo->vecS) + texInfo->distS) / getTexWidth(face->texture);
+			face->verts[edge].texCoord.y = (vec3FDot(&verts[0], &texInfo->vecT) + texInfo->distT) / getTexHeight(face->texture);
 		}
 
 		// Now that we have loaded all vertex data for this face
 		// We can generate a vbo for it
 		glGenBuffers(1, &face->glId);
 		glBindBuffer(GL_ARRAY_BUFFER, face->glId);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vert)*face->numVerts, face->verts, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vert)*face->numVerts, &face->verts[0], GL_STATIC_DRAW);
 	}
 
 	free(faces);
@@ -274,7 +276,7 @@ void renderAllBspFaces(Bsp *bsp){
 		glEnableVertexAttribArray(1);
 		bindTexture(face->texture);
 
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, face->numVerts);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, face->numVerts);
 
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);

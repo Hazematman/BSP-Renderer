@@ -9,6 +9,7 @@
 #include "pak.h"
 #include "bsp.h"
 #include "palette.h"
+#include "quad.h"
 
 #define BITS_PER_PIXEL 8
 #define DEPTH_BUFFER_SIZE 24
@@ -34,10 +35,10 @@ static void initGL(){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	glDepthFunc(GL_LEQUAL);
 
-	glEnable(GL_CULL_FACE);
-	glFrontFace(GL_CW);
+	//glEnable(GL_CULL_FACE);
+	//glFrontFace(GL_CW);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -47,6 +48,8 @@ static void initGL(){
 	glBindVertexArray(vao);
 
 	createShader(&prg, "data/vs.glsl", "data/fs.glsl");
+
+	initQuad();
 }
 
 static void initData(){
@@ -73,6 +76,7 @@ Error init(){
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, STENCIL_BUFFER_SIZE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, GL_TRUE);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, DEPTH_BUFFER_SIZE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, MAJOR_GL_VERSION);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, MINOR_GL_VERSION);
 	screen = SDL_CreateWindow(WINDOW_TITLE,
@@ -93,8 +97,9 @@ Error init(){
 	return NO_ERROR;
 }
 
-vec3Float pos;
-float speed = 10.0f;
+static vec3Float pos;
+static float speed = 10.0f;
+static float angle = 0;
 
 void run(){
 	bool running = true;
@@ -102,6 +107,7 @@ void run(){
 
 	GLint projLoc = getUniformLoc(&prg, "proj");
 	GLint transLoc = getUniformLoc(&prg, "trans");
+	GLint rotLoc = getUniformLoc(&prg, "rot");
 	GLint texLoc = getUniformLoc(&prg, "tex");
 	
 	while(running){
@@ -109,27 +115,52 @@ void run(){
 			if(e.type == SDL_QUIT){
 				running = false;
 			}else if(e.type == SDL_KEYDOWN){
-				if(e.key.keysym.sym == SDLK_w){
-					pos.z += speed;
-				} else if(e.key.keysym.sym == SDLK_a){
-					pos.x += speed;
+				switch(e.key.keysym.sym){
+					case SDLK_w:
+						pos.z -= speed;
+						break;
+					case SDLK_s:
+						pos.z += speed;
+						break;
+					case SDLK_a:
+						pos.x -= speed;
+						break;
+					case SDLK_d:
+						pos.x += speed;
+						break;
+					case SDLK_e:
+						pos.y += speed;
+						break;
+					case SDLK_q:
+						pos.y -= speed;
+						break;
+					case SDLK_LEFT:
+						angle -= 0.1;
+						break;
+					case SDLK_RIGHT:
+						angle += 0.1;
+						break;
 				}
 			}
 		}
 
 		mat4 proj;
 		mat4 trans;
+		mat4 rot;
 		perspective(&proj, 45.0f * (PI/180.0f), WINDOW_WIDTH/WINDOW_HEIGHT, 0.1f, 1000.0f);
-		translate(&trans, pos.x, pos.y, pos.z);
-		printf("%f %f %f\n",trans.m[14], trans.m[13], trans.m[12]);
-		
+		translate(&trans, -pos.x, -pos.y, -pos.z);
+		rotateY(&rot, -angle);
+		//printf("%f %f %f %f\n",angle, pos.x, pos.y, pos.z);
+
 		glUseProgram(prg.prgID);
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj.m[0]);
 		glUniformMatrix4fv(transLoc, 1, GL_FALSE, &trans.m[0]);
+		glUniformMatrix4fv(rotLoc, 1, GL_FALSE, &rot.m[0]);
 		glUniform1i(texLoc, 0);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		renderAllBspFaces(bsp);
+		drawQuad(&prg);
 		SDL_GL_SwapWindow(screen);
 	}
 
