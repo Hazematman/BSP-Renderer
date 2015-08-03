@@ -98,6 +98,7 @@ typedef struct {
 } Face;
 
 struct s_Bsp {
+	GLuint vaoId;
 	int32_t numTextures;
 	Texture **textures;
 
@@ -187,10 +188,10 @@ static void loadBspGeometry(Bsp *bsp, void *faceData, int32_t faceSize, void *ed
 
 			face->verts[edge].normal = getPlane(bsp, faces[i].planeId)->normal;
 
-			// Negate x and flip y & z so it's oriented properly
-			face->verts[edge].position.x = -verts[0].x;
+			// Negate y and flip y & z so it's oriented properly
+			face->verts[edge].position.x = verts[0].x;
 			face->verts[edge].position.y = verts[0].z;
-			face->verts[edge].position.z = verts[0].y;
+			face->verts[edge].position.z = -verts[0].y;
 
 			// compute s and t coordinate for texture mapping
 			face->verts[edge].texCoord.x = (vec3FDot(&verts[0], &texInfo->vecS) + texInfo->distS) / getTexWidth(face->texture);
@@ -254,18 +255,26 @@ Bsp *readBsp(void *bspData, Palette *plt){
 	loadBspGeometry(bsp, bspData+header.faces.offset, header.faces.size,
 			bspData+header.edges.offset, header.edges.size,
 			bspData+header.ledges.offset, header.ledges.size);
+
+	// Create vao for face data
+	glGenVertexArrays(1, &bsp->vaoId);
+	glBindVertexArray(bsp->vaoId);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 	return bsp;
 }
 
 void renderAllBspFaces(Bsp *bsp){
+	glBindVertexArray(bsp->vaoId);
 	for(int f=0; f < bsp->numFaces; f++){
 		Face *face = &bsp->faces[f];
 		if(face->glId == 0){
 			continue;
 		}
+
 		glBindBuffer(GL_ARRAY_BUFFER, face->glId);
+
 		Vert *vert = NULL;
-		// Setup position
 		glVertexAttribPointer(
 				0,
 				3,
@@ -273,7 +282,6 @@ void renderAllBspFaces(Bsp *bsp){
 				GL_FALSE,
 				sizeof(Vert),
 				&vert->position);
-		// Setup texcoord
 		glVertexAttribPointer(
 				1,
 				2,
@@ -282,14 +290,9 @@ void renderAllBspFaces(Bsp *bsp){
 				sizeof(Vert),
 				&vert->texCoord);
 
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
 		bindTexture(face->texture);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, face->numVerts);
-
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(0);
 	}
 }
 

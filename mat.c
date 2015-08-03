@@ -7,7 +7,6 @@ void identity(mat4 *mat){
 	m[1] = 0;m[5] = 1;m[9] = 0;m[13]= 0;
 	m[2] = 0;m[6] = 0;m[10]= 1;m[14]= 0;
 	m[3] = 0;m[7] = 0;m[11]= 0;m[15]= 1;
-	return;
 }
 
 void mulMat(mat4 *dst, mat4 *a, mat4 *b){
@@ -24,7 +23,6 @@ void mulMat(mat4 *dst, mat4 *a, mat4 *b){
 			+ am[2*4 + i]*bm[j*4 + 2] + am[3*4 + i]*bm[j*4 + 3]; 
 		}
 	}
-	return;
 }
 
 void frustrum(mat4 *mat, float left, float right, float bottom, float top, float near, float far){
@@ -56,7 +54,6 @@ void frustrum(mat4 *mat, float left, float right, float bottom, float top, float
 	m[15]= 0;
 
 	mulMat(mat, mat, &r);
-	return;
 }
 
 void perspective(mat4 *mat, float fovy, float aspect, float near, float far){
@@ -89,7 +86,6 @@ void perspective(mat4 *mat, float fovy, float aspect, float near, float far){
 	m[15]= 0;
 
 	mulMat(mat, mat, &r);
-	return;
 }
 
 void translate(mat4 *mat, float x, float y, float z){
@@ -102,7 +98,6 @@ void translate(mat4 *mat, float x, float y, float z){
 
 
 	mulMat(mat, mat, &r);
-	return;
 }
 
 void rotateY(mat4 *mat, float angle){
@@ -129,5 +124,31 @@ void rotateY(mat4 *mat, float angle){
 	m[15]= 1;
 
 	mulMat(mat, mat, &r);
-	return;
+}
+
+void lookAt(mat4 *mat, vec3Float *pos, vec3Float *fwd, vec3Float *right, vec3Float *up){
+	mat4 r;
+	float *m = &r.m[0];
+
+	m[0] = right->x;
+	m[1] = up->x;
+	m[2] = -fwd->x;
+	m[3] = 0;
+
+	m[4] = right->y;
+	m[5] = up->y;
+	m[6] = -fwd->y;
+	m[7] = 0;	
+
+	m[8] = right->z;
+	m[9] = up->z;
+	m[10]= -fwd->z;
+	m[11]= 0;
+
+	m[12]= -pos->x;
+	m[13]= -pos->y;
+	m[14]= -pos->z;
+	m[15]= 1;
+
+	mulMat(mat, mat, &r);
 }

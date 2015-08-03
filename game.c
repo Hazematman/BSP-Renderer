@@ -42,14 +42,7 @@ static void initGL(){
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	//Create required vao
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
 	createShader(&prg, "data/vs.glsl", "data/fs.glsl");
-
-	initQuad();
 }
 
 static void initData(){
@@ -159,7 +152,6 @@ void run(){
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		renderAllBspFaces(bsp);
-		drawQuad(&prg);
 		SDL_GL_SwapWindow(screen);
 	}
 
